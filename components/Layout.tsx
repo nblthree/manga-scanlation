@@ -11,7 +11,7 @@ const Layout: React.FunctionComponent<{
         <title>{title}</title>
       </Head>
       <div className="wrapper h-full w-full">
-          <TopMenu />
+        <TopMenu />
       </div>
       <style jsx global>{`
         body {
