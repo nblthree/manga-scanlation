@@ -1,5 +1,6 @@
 import * as React from 'react'
 import Head from 'next/head'
+import TopMenu from './TopMenu'
 
 const Layout: React.FunctionComponent<{
   title: string
@@ -9,7 +10,9 @@ const Layout: React.FunctionComponent<{
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="wrapper h-full w-full"></div>
+      <div className="wrapper h-full w-full">
+          <TopMenu />
+      </div>
       <style jsx global>{`
         body {
           margin: 0;
@@ -31,6 +34,7 @@ const Layout: React.FunctionComponent<{
             'topBar topBar rightBarMenu'
             'leftBar main rightBar'
             'leftBar bottomBar bottomBar';
+          background-color: #181818;
         }
       `}</style>
     </>
