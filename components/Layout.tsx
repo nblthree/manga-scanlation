@@ -9,10 +9,28 @@ const Layout: React.FunctionComponent<{
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="wrapper"></div>
-      <style jsx>{`
+      <div className="wrapper h-full w-full"></div>
+      <style jsx global>{`
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
+        }
+        #__next {
+          width: 100%;
+          height: 100%;
+        }
         .wrapper {
           display: grid;
+          grid-template-columns: 40px auto 350px;
+          grid-template-rows: 30px 40px auto 20px;
+          grid-template-areas:
+            'topMenu topMenu topMenu'
+            'topBar topBar rightBarMenu'
+            'leftBar main rightBar'
+            'leftBar bottomBar bottomBar';
         }
       `}</style>
     </>
