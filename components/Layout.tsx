@@ -1,8 +1,9 @@
-import * as React from 'react'
+import { FunctionComponent } from 'react'
 import Head from 'next/head'
 import TopMenu from './TopMenu'
+import LeftBar from './LeftBar'
 
-const Layout: React.FunctionComponent<{
+const Layout: FunctionComponent<{
   title: string
 }> = ({ title = 'Home' }) => {
   return (
@@ -12,6 +13,7 @@ const Layout: React.FunctionComponent<{
       </Head>
       <div className="wrapper h-full w-full">
         <TopMenu />
+        <LeftBar />
       </div>
       <style jsx global>{`
         body {
@@ -27,7 +29,7 @@ const Layout: React.FunctionComponent<{
         }
         .wrapper {
           display: grid;
-          grid-template-columns: 40px auto 350px;
+          grid-template-columns: 30px auto 350px;
           grid-template-rows: 20px 40px auto 20px;
           grid-template-areas:
             'topMenu topMenu topMenu'

@@ -1,6 +1,6 @@
-import * as React from 'react'
+import { FunctionComponent } from 'react'
 
-const TopMenu: React.FunctionComponent = () => {
+const TopMenu: FunctionComponent = () => {
   return (
     <div className="topMenu bg-grey-700">
       <ul className="list-none flex flex-row">
