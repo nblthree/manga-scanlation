@@ -9,10 +9,11 @@ const TopMenu: React.FunctionComponent = () => {
           <button className="outline-none bg-transparent border-none focus:outline-none">
             File
           </button>
-          <ul className="list-none w-28 absolute left-0 bg-grey-900 hidden group-hover:block group-focus:block">
+          <ul className="list-none w-28 absolute left-0 p-2 bg-grey-900 hidden group-hover:block group-focus:block">
             <li className=" text-gray-50 py-1 text-xs indent-1 relative block group">
-              New File
+              Open File
             </li>
+            <hr className="border-none h-px linear-gradient my-1" />
             <li className=" text-gray-50 py-1 text-xs indent-1 relative block group">
               Save
             </li>
@@ -25,7 +26,7 @@ const TopMenu: React.FunctionComponent = () => {
           <button className="outline-none bg-transparent border-none focus:outline-none">
             Edit
           </button>
-          <ul className="list-none w-28 absolute left-0 bg-grey-900 hidden group-hover:block group-focus:block">
+          <ul className="list-none w-28 absolute left-0 p-2 bg-grey-900 hidden group-hover:block group-focus:block">
             <li className=" text-gray-50 py-1 text-xs indent-1 relative block group">
               Undo
             </li>
@@ -38,6 +39,14 @@ const TopMenu: React.FunctionComponent = () => {
       <style jsx>{`
         .topMenu {
           grid-area: topMenu;
+        }
+        .linear-gradient {
+          background-image: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0),
+            rgba(255, 255, 255, 0.5),
+            rgba(255, 255, 255, 0)
+          );
         }
       `}</style>
     </div>
