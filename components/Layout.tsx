@@ -28,7 +28,7 @@ const Layout: React.FunctionComponent<{
         .wrapper {
           display: grid;
           grid-template-columns: 40px auto 350px;
-          grid-template-rows: 30px 40px auto 20px;
+          grid-template-rows: 20px 40px auto 20px;
           grid-template-areas:
             'topMenu topMenu topMenu'
             'topBar topBar rightBarMenu'
