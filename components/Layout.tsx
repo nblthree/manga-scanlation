@@ -3,6 +3,8 @@ import Head from 'next/head'
 import TopMenu from './TopMenu'
 import LeftBar from './LeftBar'
 import TopBar from './TopBar'
+import RightBar from './RightBar'
+import BottomBar from './BottomBar'
 
 const Layout: FunctionComponent<{
   title: string
@@ -16,6 +18,8 @@ const Layout: FunctionComponent<{
         <TopMenu />
         <LeftBar />
         <TopBar />
+        <RightBar />
+        <BottomBar />
       </div>
       <style jsx global>{`
         body {
@@ -35,7 +39,7 @@ const Layout: FunctionComponent<{
           grid-template-rows: 20px 30px auto 20px;
           grid-template-areas:
             'topMenu topMenu topMenu'
-            'topBar topBar rightBarMenu'
+            'topBar topBar rightBar'
             'leftBar main rightBar'
             'leftBar bottomBar bottomBar';
           background-color: #181818;
