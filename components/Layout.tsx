@@ -2,6 +2,7 @@ import { FunctionComponent } from 'react'
 import Head from 'next/head'
 import TopMenu from './TopMenu'
 import LeftBar from './LeftBar'
+import TopBar from './TopBar'
 
 const Layout: FunctionComponent<{
   title: string
@@ -14,6 +15,7 @@ const Layout: FunctionComponent<{
       <div className="wrapper h-full w-full">
         <TopMenu />
         <LeftBar />
+        <TopBar />
       </div>
       <style jsx global>{`
         body {
@@ -30,13 +32,16 @@ const Layout: FunctionComponent<{
         .wrapper {
           display: grid;
           grid-template-columns: 30px auto 350px;
-          grid-template-rows: 20px 40px auto 20px;
+          grid-template-rows: 20px 30px auto 20px;
           grid-template-areas:
             'topMenu topMenu topMenu'
             'topBar topBar rightBarMenu'
             'leftBar main rightBar'
             'leftBar bottomBar bottomBar';
           background-color: #181818;
+          gap: 1px;
+
+          --icon-color: #f0f0f0;
         }
       `}</style>
     </>
