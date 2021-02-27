@@ -9,7 +9,7 @@ import {
 
 const TopBar: FunctionComponent = () => {
   return (
-    <div className="TopBar bg-grey-700">
+    <div className="TopBar bg-primary">
       <ul className="list-none flex flex-row h-full divide-x-2 divide-grey-900">
         <li className="h-full px-4">
           <button

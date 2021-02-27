@@ -4,7 +4,7 @@ import { Rubber } from '../svg'
 
 const LeftBar: FunctionComponent = () => {
   return (
-    <div className="LeftBar bg-grey-700">
+    <div className="LeftBar bg-primary">
       <ul className="list-none">
         <li className="w-full">
           <button

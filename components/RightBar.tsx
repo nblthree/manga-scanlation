@@ -2,7 +2,7 @@ import { FunctionComponent } from 'react'
 
 const RightBar: FunctionComponent = () => {
   return (
-    <div className="RightBar bg-grey-700">
+    <div className="RightBar bg-primary">
       <style jsx>{`
         .RightBar {
           grid-area: rightBar;

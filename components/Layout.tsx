@@ -42,7 +42,7 @@ const Layout: FunctionComponent<{
             'topBar topBar rightBar'
             'leftBar main rightBar'
             'leftBar bottomBar bottomBar';
-          background-color: #181818;
+          background-color: #001818;
           gap: 1px;
 
           --icon-color: #f0f0f0;
