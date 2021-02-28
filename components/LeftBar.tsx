@@ -13,7 +13,7 @@ const LeftBar: FunctionComponent = () => {
           >
             <Move
               style={{ margin: 'auto' }}
-              size="1.2rem"
+              size="1rem"
               color="var(--icon-color)"
             />
           </button>
@@ -25,8 +25,9 @@ const LeftBar: FunctionComponent = () => {
           >
             <Square
               style={{ margin: 'auto' }}
-              size="1.2rem"
+              size="1rem"
               color="var(--icon-color)"
+              strokeDasharray="3px"
             />
           </button>
         </li>
@@ -37,7 +38,7 @@ const LeftBar: FunctionComponent = () => {
           >
             <Rubber
               style={{ margin: 'auto' }}
-              size="1.2rem"
+              size="1rem"
               color="var(--icon-color)"
             />
           </button>
@@ -49,7 +50,7 @@ const LeftBar: FunctionComponent = () => {
           >
             <Type
               style={{ margin: 'auto' }}
-              size="1.2rem"
+              size="1rem"
               color="var(--icon-color)"
             />
           </button>

@@ -10,7 +10,7 @@ import {
 const TopBar: FunctionComponent = () => {
   return (
     <div className="TopBar bg-primary">
-      <ul className="list-none flex flex-row h-full divide-x-2 divide-grey-900">
+      <ul className="list-none flex flex-row h-full divide-x-2 divide-grey-800">
         <li className="h-full px-4">
           <button
             title="Home"
@@ -18,7 +18,7 @@ const TopBar: FunctionComponent = () => {
           >
             <Home
               style={{ margin: 'auto' }}
-              size="1.4rem"
+              size="1.1rem"
               color="var(--icon-color)"
             />
           </button>
@@ -32,7 +32,7 @@ const TopBar: FunctionComponent = () => {
               >
                 <AlignLeft
                   style={{ margin: 'auto' }}
-                  size="1.4rem"
+                  size="1rem"
                   color="var(--icon-color)"
                 />
               </button>
@@ -44,7 +44,7 @@ const TopBar: FunctionComponent = () => {
               >
                 <AlignCenter
                   style={{ margin: 'auto' }}
-                  size="1.4rem"
+                  size="1rem"
                   color="var(--icon-color)"
                 />
               </button>
@@ -56,7 +56,7 @@ const TopBar: FunctionComponent = () => {
               >
                 <AlignJustify
                   style={{ margin: 'auto' }}
-                  size="1.4rem"
+                  size="1rem"
                   color="var(--icon-color)"
                 />
               </button>
@@ -68,7 +68,7 @@ const TopBar: FunctionComponent = () => {
               >
                 <AlignRight
                   style={{ margin: 'auto' }}
-                  size="1.4rem"
+                  size="1rem"
                   color="var(--icon-color)"
                 />
               </button>
@@ -86,7 +86,7 @@ const TopBar: FunctionComponent = () => {
                 transformOrigin: 'center',
                 transform: 'rotate(-90deg)',
               }}
-              size="1.4rem"
+              size="1rem"
               color="var(--icon-color)"
             />
           </button>
