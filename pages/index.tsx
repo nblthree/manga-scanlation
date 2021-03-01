@@ -10,6 +10,7 @@ import { useEffect, useState, useRef } from 'react'
 
 const IndexPage: NextPage = () => {
   const [imageURL, setImageURL] = useState('')
+  const [tool, setTool] = useState('none')
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -32,11 +33,11 @@ const IndexPage: NextPage = () => {
     <Layout title="Manga Scanlation">
       <div className="wrap h-full w-full">
         <TopMenu setImageURL={setImageURL} />
-        <LeftBar />
+        <LeftBar setTool={setTool} tool={tool} />
         <TopBar />
         <RightBar />
         <BottomBar />
-        <Main canvasRef={canvasRef} image={Boolean(imageURL)} />
+        <Main canvasRef={canvasRef} image={Boolean(imageURL)} tool={tool} />
         <style jsx>{`
           .wrap {
             display: grid;

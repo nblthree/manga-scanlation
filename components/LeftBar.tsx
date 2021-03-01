@@ -1,60 +1,51 @@
 import { FunctionComponent } from 'react'
-import { Move, Square, Type } from 'react-feather'
+import { Move, Square, Type, ZoomIn, ZoomOut } from 'react-feather'
 import { Rubber } from '../svg'
 
-const LeftBar: FunctionComponent = () => {
+const LeftBar: FunctionComponent<{
+  setTool: (arg: string) => void
+  tool: string
+}> = ({ setTool, tool }) => {
+  const cmp = {
+    Move,
+    Select: Square,
+    Erase: Rubber,
+    Type,
+    'Zoom In': ZoomIn,
+    'Zoom Out': ZoomOut,
+  }
   return (
     <div className="LeftBar bg-primary">
       <ul className="list-none">
-        <li className="w-full">
-          <button
-            title="Move"
-            className="w-full py-2 border-none outline-none flex bg-transparent focus:outline-none"
-          >
-            <Move
-              style={{ margin: 'auto' }}
-              size="1rem"
-              color="var(--icon-color)"
-            />
-          </button>
-        </li>
-        <li className="w-full">
-          <button
-            title="Select"
-            className="w-full py-2 border-none outline-none flex bg-transparent focus:outline-none"
-          >
-            <Square
-              style={{ margin: 'auto' }}
-              size="1rem"
-              color="var(--icon-color)"
-              strokeDasharray="3px"
-            />
-          </button>
-        </li>
-        <li className="w-full">
-          <button
-            title="Rubber"
-            className="w-full py-2 border-none outline-none flex bg-transparent focus:outline-none"
-          >
-            <Rubber
-              style={{ margin: 'auto' }}
-              size="1rem"
-              color="var(--icon-color)"
-            />
-          </button>
-        </li>
-        <li className="w-full">
-          <button
-            title="Type"
-            className="w-full py-2 border-none outline-none flex bg-transparent focus:outline-none"
-          >
-            <Type
-              style={{ margin: 'auto' }}
-              size="1rem"
-              color="var(--icon-color)"
-            />
-          </button>
-        </li>
+        {Object.keys(cmp).map((name: string) => {
+          const ToolIcon = cmp[name as keyof typeof cmp]
+          return (
+            <li
+              key={name}
+              className={`w-full ${tool === name ? 'bg-grey-300' : ''}`}
+            >
+              <button
+                title={name}
+                className="w-full py-2 border-none outline-none flex bg-transparent focus:outline-none"
+                onClick={(e) => {
+                  const target = e.currentTarget as HTMLElement
+                  setTool(
+                    target.getAttribute('title') !== tool
+                      ? (target.getAttribute('title') as string)
+                      : 'none'
+                  )
+                }}
+              >
+                <ToolIcon
+                  style={{ margin: 'auto' }}
+                  title={name}
+                  size="1rem"
+                  color="var(--icon-color)"
+                />
+              </button>
+            </li>
+          )
+        })}
       </ul>
       <style jsx>{`
         .LeftBar {

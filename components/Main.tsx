@@ -1,13 +1,38 @@
-import { FunctionComponent, RefObject } from 'react'
+import { FunctionComponent, RefObject, useState } from 'react'
 
 const Main: FunctionComponent<{
   canvasRef: RefObject<HTMLCanvasElement> | null
   image: boolean
-}> = ({ canvasRef, image }) => {
+  tool: string
+}> = ({ canvasRef, image, tool }) => {
+  const [zoom, setZoom] = useState(1)
+
+  const handleZooming = (arg: string) => {
+    let z = zoom
+    if (arg === 'Zoom In') {
+      z = zoom + 0.05
+    } else if (arg === 'Zoom Out') {
+      z = zoom - 0.05
+      if (z < 0.2) z = 0.2
+    }
+    setZoom(z)
+  }
+
   return (
-    <div className="Main flex">
-      <div className={image ? `p-3.5 m-auto max-w-full flex bg-grey-700` : ``}>
-        <canvas ref={canvasRef} className="w-full m-auto" />
+    <div className="Main flex p-8">
+      <div
+        className={image ? `p-2 m-auto overflow-hidden flex bg-grey-700` : ``}
+      >
+        <canvas
+          onClick={() => {
+            if (tool === 'Zoom In' || tool === 'Zoom Out') {
+              handleZooming(tool)
+            }
+          }}
+          ref={canvasRef}
+          className="m-auto"
+          style={{ width: `${100 * zoom}%` }}
+        />
       </div>
       <style jsx>{`
         .Main {
