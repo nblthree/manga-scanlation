@@ -37,7 +37,7 @@ const IndexPage: NextPage = () => {
         <TopBar />
         <RightBar />
         <BottomBar />
-        <Main canvasRef={canvasRef} image={Boolean(imageURL)} tool={tool} />
+        <Main canvasRef={canvasRef} image={imageURL} tool={tool} />
         <style jsx>{`
           .wrap {
             display: grid;
