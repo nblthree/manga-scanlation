@@ -4,7 +4,6 @@ import TopMenu from '../components/TopMenu'
 import LeftBar from '../components/LeftBar'
 import TopBar from '../components/TopBar'
 import RightBar from '../components/RightBar'
-import BottomBar from '../components/BottomBar'
 import Main from '../components/Main'
 import { useEffect, useState, useRef } from 'react'
 
@@ -36,13 +35,12 @@ const IndexPage: NextPage = () => {
         <LeftBar setTool={setTool} tool={tool} />
         <TopBar />
         <RightBar />
-        <BottomBar />
         <Main canvasRef={canvasRef} image={imageURL} tool={tool} />
         <style jsx>{`
           .wrap {
             display: grid;
-            grid-template-columns: 30px auto 350px;
-            grid-template-rows: 20px 30px auto 20px;
+            grid-template-columns: 30px calc(100% - 380px) 350px;
+            grid-template-rows: 20px 30px calc(100% - 70px) 20px;
             grid-template-areas:
               'topMenu topMenu topMenu'
               'topBar topBar rightBar'
