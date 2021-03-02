@@ -21,6 +21,10 @@ module.exports = {
           900: '#202020',
         },
       },
+      cursor: {
+        'zoom-in': 'zoom-in',
+        'zoom-out': 'zoom-out',
+      },
     },
   },
   variants: {
