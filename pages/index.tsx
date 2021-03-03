@@ -40,12 +40,18 @@ function detectLeftButton(evt: MouseEvent) {
 const IndexPage: NextPage = () => {
   const [imageURL, setImageURL] = useState('')
   const [tool, setTool] = useState('none')
+  const [data, setData] = useState({
+    width: 0,
+    height: 0,
+    canvasPosition: { x: 0, y: 0 },
+    cursorPosition: { x: 0, y: 0 },
+    zoom: 0.5,
+    mouseDown: { x: 0, y: 0 },
+    onCanvas: false,
+  })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvas = canvasRef?.current
-  const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D
-  const w = ctx?.canvas.width
-  const h = ctx?.canvas.height
 
   useEffect(() => {
     if (canvas) {
@@ -54,65 +60,74 @@ const IndexPage: NextPage = () => {
       img.onload = function () {
         ctx.canvas.width = img.width
         ctx.canvas.height = img.height
-
+        const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
+        setData({
+          ...data,
+          width: img.width,
+          height: img.height,
+          canvasPosition: {
+            x: (maxDisplayWidth - 0.5 * img.width) / 2,
+            y: (maxDisplayHeight - 0.5 * img.height) / 2,
+          },
+        })
         ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height)
       }
       img.src = imageURL
     }
-  }, [imageURL])
+  }, [imageURL, canvas])
 
-  const [data, setData] = useState({
-    width: 0,
-    height: 0,
-    maxDisplayWidth: 0,
-    maxDisplayHeight: 0,
-    canvasPosition: { x: 0, y: 0 },
-    cursorPosition: { x: 0, y: 0 },
-  })
-  const [zoom, setZoom] = useState(1)
+  const getMaxDisplaySize = (canvas: HTMLCanvasElement) => {
+    const maxDisplayWidth =
+      (canvas.parentElement?.parentElement?.offsetWidth || 0) - 16 * 2
+    const maxDisplayHeight =
+      (canvas.parentElement?.parentElement?.offsetHeight || 0) - 16 * 2
 
-  const handleZooming = (arg: string) => {
-    const minZoom = data.maxDisplayWidth / data.width / 2
-    let z = zoom
-    if (arg === 'Zoom In') {
-      z = zoom + 0.05
-      if (z > data.width / data.maxDisplayWidth)
-        z = data.width / data.maxDisplayWidth
-    } else if (arg === 'Zoom Out') {
-      z = zoom - 0.05
-      if (z < minZoom) z = minZoom
-    }
-    setZoom(z)
+    return { maxDisplayHeight, maxDisplayWidth }
   }
 
-  useEffect(() => {
-    if (canvas) {
-      const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-      const width = ctx.canvas.width
-      const height = ctx.canvas.height
-      //const displayWidth = canvas.offsetWidth
-      //const displayHeight = canvas.offsetHeight
-      const maxDisplayWidth =
-        (canvas.parentElement?.parentElement?.offsetWidth || 0) - 16 * 2
-      const maxDisplayHeight =
-        (canvas.parentElement?.parentElement?.offsetHeight || 0) - 16 * 2
-      setData({ ...data, width, height, maxDisplayWidth, maxDisplayHeight })
+  const handleZooming = (arg: string) => {
+    if (!canvas) return
+    const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
+    const minZoom = Math.min(
+      maxDisplayWidth / data.width,
+      maxDisplayHeight / (data.width * (data.height / data.width))
+    )
+    let z = data.zoom
+    if (arg === 'Zoom In') {
+      z = data.zoom + 0.05
+      if (z > 1) z = 1
+    } else if (arg === 'Zoom Out') {
+      z = data.zoom - 0.05
+      if (z < minZoom) z = minZoom
     }
-  }, [w, h])
+
+    const x = maxDisplayWidth - z * data.width
+    const y = maxDisplayHeight - z * data.height
+    setData({
+      ...data,
+      zoom: z,
+      canvasPosition: {
+        x: x / 2,
+        y: y / 2,
+      },
+    })
+  }
 
   const getCursorPosition = (ev: MouseEvent) => {
-    if (!canvas) return {}
+    if (!canvas) return
     const cursorPosition = getMousePos(canvas, ev)
     return { cursorPosition }
   }
 
   const getCanvasPosition = (e: MouseEvent) => {
-    if (tool !== 'Move' || !canvas || !detectLeftButton(e)) return {}
+    if (tool !== 'Move' || !canvas || !detectLeftButton(e)) return
 
-    const minX = data.maxDisplayWidth - canvas.offsetWidth
-    const minY = data.maxDisplayHeight - canvas.offsetHeight
-    const x = data.canvasPosition.x + e.movementX
-    const y = data.canvasPosition.y + e.movementY
+    const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
+
+    const minX = maxDisplayWidth - canvas.offsetWidth
+    const minY = maxDisplayHeight - canvas.offsetHeight
+    const x = data.canvasPosition.x + (e.pageX - data.mouseDown.x)
+    const y = data.canvasPosition.y + (e.pageY - data.mouseDown.y)
 
     return {
       canvasPosition: {
@@ -123,17 +138,39 @@ const IndexPage: NextPage = () => {
   }
 
   const handleMoving = (ev: MouseEvent) => {
-    const cursorPosition = getCursorPosition(ev)
-    const canvasPosition = getCanvasPosition(ev)
-    setData({ ...data, ...cursorPosition, ...canvasPosition })
+    ev.preventDefault()
+    const cursorPosition = getCursorPosition(ev) || {}
+    const canvasPosition = data.onCanvas ? getCanvasPosition(ev) || {} : {}
+    setData({
+      ...data,
+      ...cursorPosition,
+      ...canvasPosition,
+      mouseDown: { x: ev.pageX, y: ev.pageY },
+    })
+  }
+
+  const handleMouseDown = (ev: MouseEvent) => {
+    if ((ev.target as HTMLElement).id !== 'canvas') return
+    setData({
+      ...data,
+      mouseDown: { x: ev.pageX, y: ev.pageY },
+      onCanvas: true,
+    })
+  }
+  const handleMouseUp = () => {
+    setData({ ...data, onCanvas: false })
   }
 
   useEffect(() => {
     if (!canvas) return
 
     canvas.addEventListener('mousemove', handleMoving)
+    canvas.addEventListener('mousedown', handleMouseDown)
+    canvas.addEventListener('mouseup', handleMouseUp)
     return () => {
       canvas.removeEventListener('mousemove', handleMoving)
+      canvas.removeEventListener('mousedown', handleMouseDown)
+      canvas.removeEventListener('mouseup', handleMouseUp)
     }
   })
 
@@ -151,16 +188,17 @@ const IndexPage: NextPage = () => {
             }
           >
             <canvas
+              id="canvas"
               onClick={() => {
                 if (tool === 'Zoom In' || tool === 'Zoom Out') {
                   handleZooming(tool)
                 }
               }}
               ref={canvasRef}
-              className={`m-auto ${cursor(tool)}`}
+              className={`m-auto ${cursor(tool)} origin-top-left`}
               style={{
-                width: `${100 * zoom}%`,
-                transform: `translate(${data.canvasPosition.x}px, ${data.canvasPosition.y}px)`,
+                //width: `${data.width * data.zoom}px`,
+                transform: `translate(${data.canvasPosition.x}px, ${data.canvasPosition.y}px) scale(${data.zoom})`,
               }}
             />
           </div>

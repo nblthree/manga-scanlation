@@ -24,9 +24,9 @@ const BottomBar: FunctionComponent<{
             size="0.8rem"
             color="var(--icon-color)"
           />
-          <span className="text-xs text-secondary">{`${canvasPosition.x.toFixed(
+          <span className="text-xs text-secondary">{`${(-canvasPosition.x).toFixed(
             0
-          )}, ${canvasPosition.y.toFixed(0)}px`}</span>
+          )}, ${(-canvasPosition.y).toFixed(0)}px`}</span>
         </li>
       </ul>
       <style jsx>{`
