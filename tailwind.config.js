@@ -25,6 +25,7 @@ module.exports = {
         'zoom-in': 'zoom-in',
         'zoom-out': 'zoom-out',
         crosshair: 'crosshair',
+        none: 'none',
       },
     },
   },

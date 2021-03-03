@@ -34,6 +34,7 @@ const cursor = (tool: string): string => {
     'Zoom Out': 'cursor-zoom-out',
     none: '',
     Select: 'cursor-crosshair',
+    Erase: 'cursor-none',
   }
   return c[tool] || ''
 }
@@ -60,6 +61,7 @@ const IndexPage: NextPage = () => {
     initialPosition: { x: 0, y: 0 },
     endPosition: { x: 0, y: 0 },
     onCanvas: false,
+    rubberRadius: 20,
   })
   const [imgElement, setImgElement] = useState<HTMLImageElement>()
 
@@ -85,11 +87,21 @@ const IndexPage: NextPage = () => {
     height: number
   }) => {
     if (!canvas) return
-    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
     drawImage()
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
     ctx.lineWidth = 3
     ctx.setLineDash([6])
     ctx.strokeRect(x, y, width, height)
+  }
+
+  const drawRubber = ({ x, y }: { x: number; y: number }) => {
+    if (!canvas) return
+    drawImage()
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(x, y, data.rubberRadius, 0, 2 * Math.PI)
+    ctx.stroke()
   }
 
   useEffect(() => {
@@ -188,6 +200,9 @@ const IndexPage: NextPage = () => {
         height: Math.abs(data.initialPosition.y - cursorPosition.y),
       })
     }
+    if (tool === 'Erase' && canvas && cursorPosition) {
+      drawRubber(cursorPosition)
+    }
   }
 
   const handleMouseDown = (ev: MouseEvent) => {
@@ -208,16 +223,23 @@ const IndexPage: NextPage = () => {
     })
   }
 
+  const handleMouseLeave = () => {
+    if (tool !== 'Erase') return
+    drawImage()
+  }
+
   useEffect(() => {
     if (!canvas) return
 
     canvas.addEventListener('mousemove', handleMoving)
     canvas.addEventListener('mousedown', handleMouseDown)
     canvas.addEventListener('mouseup', handleMouseUp)
+    canvas.addEventListener('mouseleave', handleMouseLeave)
     return () => {
       canvas.removeEventListener('mousemove', handleMoving)
       canvas.removeEventListener('mousedown', handleMouseDown)
       canvas.removeEventListener('mouseup', handleMouseUp)
+      canvas.removeEventListener('mouseleave', handleMouseLeave)
     }
   })
 
