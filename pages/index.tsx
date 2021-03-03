@@ -18,12 +18,22 @@ function getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {
   }
 }
 
+const getMaxDisplaySize = (canvas: HTMLCanvasElement) => {
+  const maxDisplayWidth =
+    (canvas.parentElement?.parentElement?.offsetWidth || 0) - 16 * 2
+  const maxDisplayHeight =
+    (canvas.parentElement?.parentElement?.offsetHeight || 0) - 16 * 2
+
+  return { maxDisplayHeight, maxDisplayWidth }
+}
+
 const cursor = (tool: string): string => {
   const c: any = {
     Move: 'cursor-move',
     'Zoom In': 'cursor-zoom-in',
     'Zoom Out': 'cursor-zoom-out',
     none: '',
+    Select: 'cursor-crosshair',
   }
   return c[tool] || ''
 }
@@ -47,11 +57,40 @@ const IndexPage: NextPage = () => {
     cursorPosition: { x: 0, y: 0 },
     zoom: 0.5,
     mouseDown: { x: 0, y: 0 },
+    initialPosition: { x: 0, y: 0 },
+    endPosition: { x: 0, y: 0 },
     onCanvas: false,
   })
+  const [imgElement, setImgElement] = useState<HTMLImageElement>()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvas = canvasRef?.current
+
+  const drawImage = () => {
+    if (!canvas || !imgElement) return
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.drawImage(imgElement, 0, 0, ctx.canvas.width, ctx.canvas.height)
+  }
+
+  const drawDashedRect = ({
+    x,
+    y,
+    width,
+    height,
+  }: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }) => {
+    if (!canvas) return
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    drawImage()
+    ctx.lineWidth = 3
+    ctx.setLineDash([6])
+    ctx.strokeRect(x, y, width, height)
+  }
 
   useEffect(() => {
     if (canvas) {
@@ -71,19 +110,11 @@ const IndexPage: NextPage = () => {
           },
         })
         ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height)
+        setImgElement(img)
       }
       img.src = imageURL
     }
   }, [imageURL, canvas])
-
-  const getMaxDisplaySize = (canvas: HTMLCanvasElement) => {
-    const maxDisplayWidth =
-      (canvas.parentElement?.parentElement?.offsetWidth || 0) - 16 * 2
-    const maxDisplayHeight =
-      (canvas.parentElement?.parentElement?.offsetHeight || 0) - 16 * 2
-
-    return { maxDisplayHeight, maxDisplayWidth }
-  }
 
   const handleZooming = (arg: string) => {
     if (!canvas) return
@@ -116,7 +147,7 @@ const IndexPage: NextPage = () => {
   const getCursorPosition = (ev: MouseEvent) => {
     if (!canvas) return
     const cursorPosition = getMousePos(canvas, ev)
-    return { cursorPosition }
+    return cursorPosition
   }
 
   const getCanvasPosition = (e: MouseEvent) => {
@@ -130,35 +161,51 @@ const IndexPage: NextPage = () => {
     const y = data.canvasPosition.y + (e.pageY - data.mouseDown.y)
 
     return {
-      canvasPosition: {
-        x: Math.max(Math.min(0, x), minX),
-        y: Math.max(Math.min(0, y), minY),
-      },
+      x: Math.max(Math.min(0, x), minX),
+      y: Math.max(Math.min(0, y), minY),
     }
   }
 
   const handleMoving = (ev: MouseEvent) => {
     ev.preventDefault()
-    const cursorPosition = getCursorPosition(ev) || {}
-    const canvasPosition = data.onCanvas ? getCanvasPosition(ev) || {} : {}
+    const cursorPosition = getCursorPosition(ev)
+    const canvasPosition = data.onCanvas
+      ? getCanvasPosition(ev)
+      : data.canvasPosition
     setData({
       ...data,
-      ...cursorPosition,
-      ...canvasPosition,
+      ...(cursorPosition ? { cursorPosition } : {}),
+      ...(canvasPosition ? { canvasPosition } : {}),
       mouseDown: { x: ev.pageX, y: ev.pageY },
     })
+    if (canvas && cursorPosition && data.onCanvas && tool === 'Select') {
+      const x = Math.min(data.initialPosition.x, cursorPosition.x)
+      const y = Math.min(data.initialPosition.y, cursorPosition.y)
+      drawDashedRect({
+        x,
+        y,
+        width: Math.abs(data.initialPosition.x - cursorPosition.x),
+        height: Math.abs(data.initialPosition.y - cursorPosition.y),
+      })
+    }
   }
 
   const handleMouseDown = (ev: MouseEvent) => {
     if ((ev.target as HTMLElement).id !== 'canvas') return
     setData({
       ...data,
+      initialPosition: getCursorPosition(ev) as { x: number; y: number },
       mouseDown: { x: ev.pageX, y: ev.pageY },
       onCanvas: true,
     })
   }
-  const handleMouseUp = () => {
-    setData({ ...data, onCanvas: false })
+
+  const handleMouseUp = (ev: MouseEvent) => {
+    setData({
+      ...data,
+      onCanvas: false,
+      endPosition: getCursorPosition(ev) as { x: number; y: number },
+    })
   }
 
   useEffect(() => {

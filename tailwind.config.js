@@ -24,6 +24,7 @@ module.exports = {
       cursor: {
         'zoom-in': 'zoom-in',
         'zoom-out': 'zoom-out',
+        crosshair: 'crosshair',
       },
     },
   },
