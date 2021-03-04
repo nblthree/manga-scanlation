@@ -63,16 +63,19 @@ const IndexPage: NextPage = () => {
     onCanvas: false,
     rubberRadius: 20,
   })
-  const [imgElement, setImgElement] = useState<HTMLImageElement>()
+  const [history] = useState<{
+    list: ImageData[]
+    index: number
+    time: number
+  }>({ list: [], index: -1, time: 0 })
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvas = canvasRef?.current
 
-  const drawImage = () => {
-    if (!canvas || !imgElement) return
+  const drawLastImageData = () => {
+    if (!canvas) return
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    ctx.drawImage(imgElement, 0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.putImageData(history.list[history.index], 0, 0)
   }
 
   const drawDashedRect = ({
@@ -87,7 +90,7 @@ const IndexPage: NextPage = () => {
     height: number
   }) => {
     if (!canvas) return
-    drawImage()
+    drawLastImageData()
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
     ctx.lineWidth = 3
     ctx.setLineDash([6])
@@ -96,7 +99,7 @@ const IndexPage: NextPage = () => {
 
   const drawRubber = ({ x, y }: { x: number; y: number }) => {
     if (!canvas) return
-    drawImage()
+    drawLastImageData()
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
     ctx.lineWidth = 3
     ctx.beginPath()
@@ -122,7 +125,7 @@ const IndexPage: NextPage = () => {
           },
         })
         ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height)
-        setImgElement(img)
+        saveCanvas()
       }
       img.src = imageURL
     }
@@ -178,6 +181,18 @@ const IndexPage: NextPage = () => {
     }
   }
 
+  const erase = (ev: MouseEvent) => {
+    if (!canvas) return
+    const { x, y } = getCursorPosition(ev) as { x: number; y: number }
+    drawLastImageData()
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    ctx.fillStyle = '#ffffff'
+    ctx.beginPath()
+    ctx.arc(x, y, data.rubberRadius, 0, 2 * Math.PI)
+    ctx.fill()
+    saveCanvas()
+  }
+
   const handleMoving = (ev: MouseEvent) => {
     ev.preventDefault()
     const cursorPosition = getCursorPosition(ev)
@@ -202,6 +217,29 @@ const IndexPage: NextPage = () => {
     }
     if (tool === 'Erase' && canvas && cursorPosition) {
       drawRubber(cursorPosition)
+      if (data.onCanvas && detectLeftButton(ev)) {
+        erase(ev)
+      }
+    }
+  }
+
+  const saveCanvas = () => {
+    if (!canvas) return
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const canvasData = ctx.getImageData(
+      0,
+      0,
+      ctx.canvas.width,
+      ctx.canvas.height
+    )
+    const dt = Date.now() - history.time
+    if (dt < 5000) {
+      history.list[history.index] = canvasData
+      history.time = Date.now()
+    } else {
+      history.list.push(canvasData)
+      history.time = Date.now()
+      history.index += 1
     }
   }
 
@@ -225,7 +263,7 @@ const IndexPage: NextPage = () => {
 
   const handleMouseLeave = () => {
     if (tool !== 'Erase') return
-    drawImage()
+    drawLastImageData()
   }
 
   useEffect(() => {
