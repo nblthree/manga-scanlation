@@ -1,4 +1,4 @@
-import { FunctionComponent } from 'react'
+import { FunctionComponent, useState } from 'react'
 import {
   Home,
   AlignLeft,
@@ -6,8 +6,26 @@ import {
   AlignJustify,
   AlignRight,
 } from 'react-feather'
+import { ChromePicker, RGBColor } from 'react-color'
 
-const TopBar: FunctionComponent = () => {
+const rgba2hex = ({ r, g, b, a = 1 }: RGBColor) => {
+  let hex =
+    (r | (1 << 8)).toString(16).slice(1) +
+    (g | (1 << 8)).toString(16).slice(1) +
+    (b | (1 << 8)).toString(16).slice(1)
+  const alpha = ((a * 255) | (1 << 8)).toString(16).slice(1)
+  hex += alpha
+
+  return '#' + hex
+}
+
+const TopBar: FunctionComponent<{
+  styles: any
+  setStyles: (arg: any) => void
+}> = ({ styles, setStyles }) => {
+  const [show, setShow] = useState({ bg: false })
+  const [localState, setLocalState] = useState({ ...styles })
+
   return (
     <div className="TopBar bg-primary">
       <ul className="list-none flex flex-row h-full divide-x-2 divide-grey-800">
@@ -22,6 +40,32 @@ const TopBar: FunctionComponent = () => {
               color="var(--icon-color)"
             />
           </button>
+        </li>
+        <li className="h-full px-2 flex relative">
+          <span className=" text-secondary text-sm leading-8 pr-2">Fill :</span>
+          <button
+            title="Fill Color"
+            className="h-4 border-none m-auto outline-none flex focus:outline-none w-6"
+            style={{ backgroundColor: styles.bg }}
+            onClick={() => {
+              setShow({ ...show, bg: !show.bg })
+            }}
+          ></button>
+          <div
+            className={`absolute left-0 top-full z-10 ${
+              show.bg ? 'block' : 'hidden'
+            }`}
+          >
+            <ChromePicker
+              color={localState.bg}
+              onChange={({ rgb }: { rgb: RGBColor }) => {
+                setLocalState({ ...localState, bg: rgb })
+              }}
+              onChangeComplete={({ rgb }: { rgb: RGBColor }) => {
+                setStyles({ ...styles, bg: rgba2hex(rgb) })
+              }}
+            />
+          </div>
         </li>
         <li className="h-full">
           <ul className="list-none flex flex-row h-full">

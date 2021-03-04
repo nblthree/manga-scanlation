@@ -63,6 +63,11 @@ const IndexPage: NextPage = () => {
     onCanvas: false,
     rubberRadius: 20,
   })
+  const [styles, setStyles] = useState({
+    bg: '#ffffff',
+    color: '#000000',
+    text: 'align-left',
+  })
   const [history] = useState<{
     list: ImageData[]
     index: number
@@ -170,14 +175,14 @@ const IndexPage: NextPage = () => {
 
     const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
 
-    const minX = maxDisplayWidth - canvas.offsetWidth
-    const minY = maxDisplayHeight - canvas.offsetHeight
+    const minX = maxDisplayWidth - data.width * data.zoom
+    const minY = maxDisplayHeight - data.height * data.zoom
     const x = data.canvasPosition.x + (e.pageX - data.mouseDown.x)
     const y = data.canvasPosition.y + (e.pageY - data.mouseDown.y)
 
     return {
-      x: Math.max(Math.min(0, x), minX),
-      y: Math.max(Math.min(0, y), minY),
+      x: minX < 0 ? Math.max(Math.min(0, x), minX) : minX / 2,
+      y: minY < 0 ? Math.max(Math.min(0, y), minY) : minY / 2,
     }
   }
 
@@ -186,7 +191,7 @@ const IndexPage: NextPage = () => {
     const { x, y } = getCursorPosition(ev) as { x: number; y: number }
     drawLastImageData()
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-    ctx.fillStyle = '#ffffff'
+    ctx.fillStyle = styles.bg
     ctx.beginPath()
     ctx.arc(x, y, data.rubberRadius, 0, 2 * Math.PI)
     ctx.fill()
@@ -194,6 +199,7 @@ const IndexPage: NextPage = () => {
   }
 
   const handleMoving = (ev: MouseEvent) => {
+    if (!imageURL) return
     ev.preventDefault()
     const cursorPosition = getCursorPosition(ev)
     const canvasPosition = data.onCanvas
@@ -216,10 +222,10 @@ const IndexPage: NextPage = () => {
       })
     }
     if (tool === 'Erase' && canvas && cursorPosition) {
-      drawRubber(cursorPosition)
       if (data.onCanvas && detectLeftButton(ev)) {
         erase(ev)
       }
+      drawRubber(cursorPosition)
     }
   }
 
@@ -286,7 +292,7 @@ const IndexPage: NextPage = () => {
       <div className="wrap h-full w-full">
         <TopMenu setImageURL={setImageURL} />
         <LeftBar setTool={setTool} tool={tool} />
-        <TopBar />
+        <TopBar styles={styles} setStyles={setStyles} />
         <RightBar />
         <div className="Main flex p-4">
           <div
