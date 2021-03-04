@@ -8,7 +8,10 @@ import BottomBar from '../components/BottomBar'
 import { useEffect, useState, useRef } from 'react'
 import { rgba2hex } from '../utils'
 
-function getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {
+function getMousePos(
+  canvas: HTMLCanvasElement,
+  evt: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+) {
   const rect = canvas.getBoundingClientRect(), // abs. size of element
     scaleX = canvas.width / rect.width, // relationship bitmap vs. element for X
     scaleY = canvas.height / rect.height // relationship bitmap vs. element for Y
@@ -40,7 +43,9 @@ const cursor = (tool: string): string => {
   return c[tool] || ''
 }
 
-function detectLeftButton(evt: MouseEvent) {
+function detectLeftButton(
+  evt: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+) {
   evt = evt || window.event
   if ('buttons' in evt) {
     return evt.buttons == 1
@@ -166,13 +171,17 @@ const IndexPage: NextPage = () => {
     })
   }
 
-  const getCursorPosition = (ev: MouseEvent) => {
+  const getCursorPosition = (
+    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  ) => {
     if (!canvas) return
     const cursorPosition = getMousePos(canvas, ev)
     return cursorPosition
   }
 
-  const getCanvasPosition = (e: MouseEvent) => {
+  const getCanvasPosition = (
+    e: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  ) => {
     if (tool !== 'Move' || !canvas || !detectLeftButton(e)) return
 
     const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
@@ -188,7 +197,7 @@ const IndexPage: NextPage = () => {
     }
   }
 
-  const pickColor = (ev: MouseEvent) => {
+  const pickColor = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (tool !== 'Picker') return
     const cursorPosition = getCursorPosition(ev)
     if (!cursorPosition || !canvas) return
@@ -199,7 +208,7 @@ const IndexPage: NextPage = () => {
     setStyles({ ...styles, bg: hex })
   }
 
-  const erase = (ev: MouseEvent) => {
+  const erase = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     if (!canvas) return
     const { x, y } = getCursorPosition(ev) as { x: number; y: number }
     drawLastImageData()
@@ -211,7 +220,29 @@ const IndexPage: NextPage = () => {
     saveCanvas()
   }
 
-  const handleMoving = (ev: MouseEvent) => {
+  const saveCanvas = () => {
+    if (!canvas) return
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const canvasData = ctx.getImageData(
+      0,
+      0,
+      ctx.canvas.width,
+      ctx.canvas.height
+    )
+    const dt = Date.now() - history.time
+    if (dt < 5000) {
+      history.list[history.index] = canvasData
+      history.time = Date.now()
+    } else {
+      history.list.push(canvasData)
+      history.time = Date.now()
+      history.index += 1
+    }
+  }
+
+  const handleMoving = (
+    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+  ) => {
     if (data.width === 0) return
     ev.preventDefault()
     const cursorPosition = getCursorPosition(ev)
@@ -240,62 +271,27 @@ const IndexPage: NextPage = () => {
     }
   }
 
-  const saveCanvas = () => {
-    if (!canvas) return
-    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-    const canvasData = ctx.getImageData(
-      0,
-      0,
-      ctx.canvas.width,
-      ctx.canvas.height
-    )
-    const dt = Date.now() - history.time
-    if (dt < 5000) {
-      history.list[history.index] = canvasData
-      history.time = Date.now()
-    } else {
-      history.list.push(canvasData)
-      history.time = Date.now()
-      history.index += 1
+  const handleShortcuts = (ev: KeyboardEvent) => {
+    if (ev.key === 'Backspace' && tool === 'Select' && canvas) {
+      drawLastImageData()
+      const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+      ctx.fillStyle = styles.bg
+      const x = Math.min(data.initialPosition.x, data.endPosition.x)
+      const y = Math.min(data.initialPosition.y, data.endPosition.y)
+      ctx.fillRect(
+        x,
+        y,
+        Math.abs(data.initialPosition.x - data.endPosition.x),
+        Math.abs(data.initialPosition.y - data.endPosition.y)
+      )
+      saveCanvas()
     }
   }
 
-  const handleMouseDown = (ev: MouseEvent) => {
-    if ((ev.target as HTMLElement).id !== 'canvas') return
-    setData({
-      ...data,
-      initialPosition: getCursorPosition(ev) as { x: number; y: number },
-      mouseDown: { x: ev.pageX, y: ev.pageY },
-      onCanvas: true,
-    })
-  }
-
-  const handleMouseUp = (ev: MouseEvent) => {
-    setData({
-      ...data,
-      onCanvas: false,
-      endPosition: getCursorPosition(ev) as { x: number; y: number },
-    })
-  }
-
-  const handleMouseLeave = () => {
-    if (tool !== 'Erase') return
-    drawLastImageData()
-  }
-
   useEffect(() => {
-    if (!canvas) return
-
-    canvas.addEventListener('mousemove', handleMoving)
-    canvas.addEventListener('mousedown', handleMouseDown)
-    canvas.addEventListener('mouseup', handleMouseUp)
-    canvas.addEventListener('mouseleave', handleMouseLeave)
-    canvas.addEventListener('click', pickColor)
+    window.addEventListener('keyup', handleShortcuts)
     return () => {
-      canvas.removeEventListener('mousemove', handleMoving)
-      canvas.removeEventListener('mousedown', handleMouseDown)
-      canvas.removeEventListener('mouseup', handleMouseUp)
-      canvas.removeEventListener('click', pickColor)
+      window.removeEventListener('keyup', handleShortcuts)
     }
   })
 
@@ -314,11 +310,36 @@ const IndexPage: NextPage = () => {
           >
             <canvas
               id="canvas"
-              onClick={() => {
+              onClick={(e) => {
                 if (tool === 'Zoom In' || tool === 'Zoom Out') {
                   handleZooming(tool)
                 }
+                pickColor(e)
               }}
+              onMouseLeave={() => {
+                if (tool !== 'Erase') return
+                drawLastImageData()
+              }}
+              onMouseUp={(e) => {
+                setData({
+                  ...data,
+                  onCanvas: false,
+                  endPosition: getCursorPosition(e) as { x: number; y: number },
+                })
+              }}
+              onMouseDown={(e) => {
+                if ((e.target as HTMLElement).id !== 'canvas') return
+                setData({
+                  ...data,
+                  initialPosition: getCursorPosition(e) as {
+                    x: number
+                    y: number
+                  },
+                  mouseDown: { x: e.pageX, y: e.pageY },
+                  onCanvas: true,
+                })
+              }}
+              onMouseMove={handleMoving}
               ref={canvasRef}
               className={`m-auto ${cursor(tool)} origin-top-left`}
               style={{
