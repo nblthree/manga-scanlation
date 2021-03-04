@@ -6,6 +6,7 @@ import TopBar from '../components/TopBar'
 import RightBar from '../components/RightBar'
 import BottomBar from '../components/BottomBar'
 import { useEffect, useState, useRef } from 'react'
+import { rgba2hex } from '../utils'
 
 function getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {
   const rect = canvas.getBoundingClientRect(), // abs. size of element
@@ -113,27 +114,28 @@ const IndexPage: NextPage = () => {
   }
 
   useEffect(() => {
-    if (canvas) {
-      const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-      const img = new Image()
-      img.onload = function () {
-        ctx.canvas.width = img.width
-        ctx.canvas.height = img.height
-        const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
-        setData({
-          ...data,
-          width: img.width,
-          height: img.height,
-          canvasPosition: {
-            x: (maxDisplayWidth - 0.5 * img.width) / 2,
-            y: (maxDisplayHeight - 0.5 * img.height) / 2,
-          },
-        })
-        ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height)
-        saveCanvas()
+    if (!canvas || !imageURL) return
+
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const img = new Image()
+    img.onload = function () {
+      ctx.canvas.width = img.width
+      ctx.canvas.height = img.height
+      const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
+      const canvasPosition = {
+        x: (maxDisplayWidth - 0.5 * img.width) / 2,
+        y: (maxDisplayHeight - 0.5 * img.height) / 2,
       }
-      img.src = imageURL
+      setData({
+        ...data,
+        width: img.width,
+        height: img.height,
+        canvasPosition,
+      })
+      ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height)
+      saveCanvas()
     }
+    img.src = imageURL
   }, [imageURL, canvas])
 
   const handleZooming = (arg: string) => {
@@ -186,6 +188,17 @@ const IndexPage: NextPage = () => {
     }
   }
 
+  const pickColor = (ev: MouseEvent) => {
+    if (tool !== 'Picker') return
+    const cursorPosition = getCursorPosition(ev)
+    if (!cursorPosition || !canvas) return
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const p = ctx.getImageData(cursorPosition.x, cursorPosition.y, 1, 1).data
+    const hex = rgba2hex({ r: p[0], g: p[1], b: p[2] })
+
+    setStyles({ ...styles, bg: hex })
+  }
+
   const erase = (ev: MouseEvent) => {
     if (!canvas) return
     const { x, y } = getCursorPosition(ev) as { x: number; y: number }
@@ -199,12 +212,10 @@ const IndexPage: NextPage = () => {
   }
 
   const handleMoving = (ev: MouseEvent) => {
-    if (!imageURL) return
+    if (data.width === 0) return
     ev.preventDefault()
     const cursorPosition = getCursorPosition(ev)
-    const canvasPosition = data.onCanvas
-      ? getCanvasPosition(ev)
-      : data.canvasPosition
+    const canvasPosition = data.onCanvas ? getCanvasPosition(ev) : null
     setData({
       ...data,
       ...(cursorPosition ? { cursorPosition } : {}),
@@ -279,11 +290,12 @@ const IndexPage: NextPage = () => {
     canvas.addEventListener('mousedown', handleMouseDown)
     canvas.addEventListener('mouseup', handleMouseUp)
     canvas.addEventListener('mouseleave', handleMouseLeave)
+    canvas.addEventListener('click', pickColor)
     return () => {
       canvas.removeEventListener('mousemove', handleMoving)
       canvas.removeEventListener('mousedown', handleMouseDown)
       canvas.removeEventListener('mouseup', handleMouseUp)
-      canvas.removeEventListener('mouseleave', handleMouseLeave)
+      canvas.removeEventListener('click', pickColor)
     }
   })
 

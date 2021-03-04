@@ -1,5 +1,6 @@
 import { FunctionComponent } from 'react'
 import { Move, Square, Type, ZoomIn, ZoomOut } from 'react-feather'
+import Colorize from '@material-ui/icons/Colorize'
 import { Rubber } from '../svg'
 
 const LeftBar: FunctionComponent<{
@@ -46,6 +47,26 @@ const LeftBar: FunctionComponent<{
             </li>
           )
         })}
+        <li className={`w-full ${tool === 'Picker' ? 'bg-grey-300' : ''}`}>
+          <button
+            title={'Picker'}
+            className="w-full py-2 border-none outline-none flex bg-transparent focus:outline-none"
+            onClick={(e) => {
+              const target = e.currentTarget as HTMLElement
+              setTool(
+                target.getAttribute('title') !== tool
+                  ? (target.getAttribute('title') as string)
+                  : 'none'
+              )
+            }}
+          >
+            <Colorize
+              titleAccess="Picker"
+              htmlColor="var(--icon-color)"
+              style={{ fontSize: '1rem', margin: 'auto' }}
+            />
+          </button>
+        </li>
       </ul>
       <style jsx>{`
         .LeftBar {
