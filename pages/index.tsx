@@ -39,6 +39,7 @@ const cursor = (tool: string): string => {
     none: '',
     Select: 'cursor-crosshair',
     Erase: 'cursor-none',
+    Type: 'cursor-text'
   }
   return c[tool] || ''
 }
