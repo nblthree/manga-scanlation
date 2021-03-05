@@ -6,6 +6,7 @@ import {
   AlignJustify,
   AlignRight,
 } from 'react-feather'
+import FormatSize from '@material-ui/icons/FormatSize'
 import { ChromePicker, RGBColor } from 'react-color'
 import { rgba2hex } from '../utils'
 
@@ -56,6 +57,25 @@ const TopBar: FunctionComponent<{
               }}
             />
           </div>
+        </li>
+        <li className="h-full px-2 flex">
+          <label htmlFor="font-size-input">
+            <FormatSize
+              titleAccess="Font size"
+              htmlColor="var(--icon-color)"
+              style={{ fontSize: '1rem', margin: 'auto 0.4rem auto 0' }}
+            />
+          </label>
+          <input
+            id="font-size-input"
+            className="w-16 my-auto h-5 indent border-0 bg-grey-900 text-xs text-secondary"
+            value={styles.textSize}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const value = Number(e.target.value)
+              if (Number.isNaN(value) || value <= 0) return
+              setStyles({ ...styles, textSize: value })
+            }}
+          />
         </li>
         <li className="h-full">
           <ul className="list-none flex flex-row h-full">
@@ -129,6 +149,9 @@ const TopBar: FunctionComponent<{
       <style jsx>{`
         .TopBar {
           grid-area: topBar;
+        }
+        .indent {
+          text-indent: 0.4rem;
         }
       `}</style>
     </div>

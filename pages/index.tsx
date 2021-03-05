@@ -39,7 +39,7 @@ const cursor = (tool: string): string => {
     none: '',
     Select: 'cursor-crosshair',
     Erase: 'cursor-none',
-    Type: 'cursor-text'
+    Type: 'cursor-text',
   }
   return c[tool] || ''
 }
@@ -53,6 +53,40 @@ function detectLeftButton(
   }
   const button = (evt as MouseEvent).which || (evt as MouseEvent).button
   return button == 1
+}
+
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  maxHeight: number,
+  lineHeight: number
+) {
+  const lines = text.split('\n')
+  const startingY = y
+  for (let i = 0; i < lines.length; i++) {
+    const words = lines[i].split(' ')
+    let line = ''
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' '
+      const metrics = ctx.measureText(testLine)
+      const testWidth = metrics.width
+      if (testWidth > maxWidth && n > 0) {
+        if (y + lineHeight > maxHeight + startingY) break
+        ctx.fillText(line, x, y + lineHeight)
+        line = words[n] + ' '
+        y += lineHeight
+      } else {
+        line = testLine
+      }
+    }
+    if (y + lineHeight > maxHeight + startingY) break
+    ctx.fillText(line, x, y + lineHeight)
+    y += lineHeight
+  }
 }
 
 const IndexPage: NextPage = () => {
@@ -72,15 +106,20 @@ const IndexPage: NextPage = () => {
   })
   const [styles, setStyles] = useState({
     bg: '#ffffff',
-    color: '#000000',
-    text: 'align-left',
+    textColor: '#000000',
+    textFont: 'serif',
+    textSize: '40',
+    textAlign: 'align-left',
   })
   const [history] = useState<{
     list: ImageData[]
     index: number
     time: number
   }>({ list: [], index: -1, time: 0 })
-  const [writingData, setWritingData] = useState<{imgData: ImageData, text: string, enter: number}>()
+  const [writingData, setWritingData] = useState<{
+    imgData: ImageData
+    text: string
+  }>()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvas = canvasRef?.current
@@ -255,7 +294,12 @@ const IndexPage: NextPage = () => {
       ...(canvasPosition ? { canvasPosition } : {}),
       mouseDown: { x: ev.pageX, y: ev.pageY },
     })
-    if (canvas && cursorPosition && data.onCanvas && (tool === 'Select' || tool === 'Type')) {
+    if (
+      canvas &&
+      cursorPosition &&
+      data.onCanvas &&
+      (tool === 'Select' || tool === 'Type')
+    ) {
       const x = Math.min(data.initialPosition.x, cursorPosition.x)
       const y = Math.min(data.initialPosition.y, cursorPosition.y)
       drawDashedRect({
@@ -290,29 +334,49 @@ const IndexPage: NextPage = () => {
     }
   }
 
+  const renderText = () => {
+    if (!canvas || !writingData?.text) return
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const x = Math.min(data.initialPosition.x, data.endPosition.x)
+    const y = Math.min(data.initialPosition.y, data.endPosition.y)
+    const width = Math.abs(data.initialPosition.x - data.endPosition.x)
+    const height = Math.abs(data.initialPosition.y - data.endPosition.y)
+    ctx.putImageData(writingData.imgData, x, y)
+
+    ctx.fillStyle = styles.textColor
+    ctx.font = `${styles.textSize}px ${styles.textFont}`
+    wrapText(
+      ctx,
+      writingData.text,
+      x,
+      y,
+      width,
+      height,
+      ctx.measureText('M').width * 1.2
+    )
+  }
+
   const write = (e: React.KeyboardEvent) => {
-    if(!canvas || !writingData?.imgData) return
+    if (!canvas || !writingData?.imgData) return
     const array = writingData.text.split('')
-    if(e.key === 'Backspace') {
-      if(writingData.text.endsWith('\n')) array.pop()
+    if (e.key === 'Backspace') {
+      if (writingData.text.endsWith('\n')) array.pop()
       array.pop()
-    } else if(e.key === 'Enter') {
+    } else if (e.key === 'Enter') {
       array.push('\n')
     } else {
       array.push(e.key)
     }
     writingData.text = array.join('')
-    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-    const x = Math.min(data.initialPosition.x, data.endPosition.x)
-    const y = Math.min(data.initialPosition.y, data.endPosition.y)
-    //const width = Math.abs(data.initialPosition.x - data.endPosition.x)
-    ctx.putImageData(writingData.imgData, x, y)
-    
-    ctx.fillStyle = styles.color
-    ctx.font = '50px serif';
-    const textArray = writingData.text.split('\n')
-    for(let i=0; i<textArray.length; i++) {
-      ctx.fillText(textArray[i], x, y + (i + 0.5) * 50);
+    renderText()
+  }
+
+  const saveAfterText = () => {
+    drawLastImageData()
+    if (writingData?.text) {
+      renderText()
+      saveCanvas()
+      writingData.text = ''
     }
   }
 
@@ -324,12 +388,17 @@ const IndexPage: NextPage = () => {
   })
 
   useEffect(() => {
-    if(['Erase', 'Type', 'Select', 'none'].includes(tool)) {
+    if (['Erase', 'Type', 'Select', 'none'].includes(tool)) {
       drawLastImageData()
-      setData({...data, initialPosition: {x: 0, y: 0}, endPosition: {x: 0, y: 0}})
+      setData({
+        ...data,
+        initialPosition: { x: 0, y: 0 },
+        endPosition: { x: 0, y: 0 },
+      })
     }
   }, [tool])
 
+  let focus = false
   return (
     <Layout title="Manga Scanlation">
       <div className="wrap h-full w-full">
@@ -355,30 +424,37 @@ const IndexPage: NextPage = () => {
                 if (tool !== 'Erase') return
                 drawLastImageData()
               }}
+              onFocus={() => {
+                focus = true
+              }}
               onMouseUp={(e) => {
+                if (focus) {
+                  focus = false
+                  return
+                }
                 let endPosition = data.endPosition
-                if(tool === 'Type' || tool === 'Select') {
+                if (tool === 'Type' || tool === 'Select') {
                   endPosition = getCursorPosition(e) as { x: number; y: number }
-                  if(tool === 'Type' && canvas) {
-                    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+                  if (tool === 'Type' && canvas) {
+                    const ctx = canvas.getContext(
+                      '2d'
+                    ) as CanvasRenderingContext2D
                     const x = Math.min(data.initialPosition.x, endPosition.x)
                     const y = Math.min(data.initialPosition.y, endPosition.y)
-                    const width = Math.abs(data.initialPosition.x - endPosition.x)
-                    const height = Math.abs(data.initialPosition.y - endPosition.y)
-                    if(width === 0 || height === 0) {
-                      saveCanvas()
+                    const width = Math.abs(
+                      data.initialPosition.x - endPosition.x
+                    )
+                    const height = Math.abs(
+                      data.initialPosition.y - endPosition.y
+                    )
+                    if (width === 0 || height === 0) {
+                      saveAfterText()
                       return
                     }
-                    const imgData = ctx.getImageData(
-                      x,
-                      y,
-                      width,
-                      height
-                    )
+                    const imgData = ctx.getImageData(x, y, width, height)
                     setWritingData({
                       imgData,
                       text: '',
-                      enter: 0
                     })
                   }
                 }
@@ -389,7 +465,11 @@ const IndexPage: NextPage = () => {
                 })
               }}
               onMouseDown={(e) => {
-                if ((e.target as HTMLElement).id !== 'canvas') return
+                if (
+                  (e.target as HTMLElement).id !== 'canvas' ||
+                  document.activeElement?.id !== 'canvas'
+                )
+                  return
                 setData({
                   ...data,
                   initialPosition: getCursorPosition(e) as {
@@ -401,7 +481,7 @@ const IndexPage: NextPage = () => {
                 })
               }}
               onMouseMove={handleMoving}
-              onKeyUp={write}
+              onKeyPress={write}
               tabIndex={1}
               ref={canvasRef}
               className={`m-auto ${cursor(tool)} origin-top-left`}
