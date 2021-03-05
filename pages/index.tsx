@@ -80,6 +80,7 @@ const IndexPage: NextPage = () => {
     index: number
     time: number
   }>({ list: [], index: -1, time: 0 })
+  const [writingData, setWritingData] = useState<{imgData: ImageData, text: string, enter: number}>()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canvas = canvasRef?.current
@@ -254,7 +255,7 @@ const IndexPage: NextPage = () => {
       ...(canvasPosition ? { canvasPosition } : {}),
       mouseDown: { x: ev.pageX, y: ev.pageY },
     })
-    if (canvas && cursorPosition && data.onCanvas && tool === 'Select') {
+    if (canvas && cursorPosition && data.onCanvas && (tool === 'Select' || tool === 'Type')) {
       const x = Math.min(data.initialPosition.x, cursorPosition.x)
       const y = Math.min(data.initialPosition.y, cursorPosition.y)
       drawDashedRect({
@@ -289,12 +290,45 @@ const IndexPage: NextPage = () => {
     }
   }
 
+  const write = (e: React.KeyboardEvent) => {
+    if(!canvas || !writingData?.imgData) return
+    const array = writingData.text.split('')
+    if(e.key === 'Backspace') {
+      if(writingData.text.endsWith('\n')) array.pop()
+      array.pop()
+    } else if(e.key === 'Enter') {
+      array.push('\n')
+    } else {
+      array.push(e.key)
+    }
+    writingData.text = array.join('')
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const x = Math.min(data.initialPosition.x, data.endPosition.x)
+    const y = Math.min(data.initialPosition.y, data.endPosition.y)
+    //const width = Math.abs(data.initialPosition.x - data.endPosition.x)
+    ctx.putImageData(writingData.imgData, x, y)
+    
+    ctx.fillStyle = styles.color
+    ctx.font = '50px serif';
+    const textArray = writingData.text.split('\n')
+    for(let i=0; i<textArray.length; i++) {
+      ctx.fillText(textArray[i], x, y + (i + 0.5) * 50);
+    }
+  }
+
   useEffect(() => {
     window.addEventListener('keyup', handleShortcuts)
     return () => {
       window.removeEventListener('keyup', handleShortcuts)
     }
   })
+
+  useEffect(() => {
+    if(['Erase', 'Type', 'Select', 'none'].includes(tool)) {
+      drawLastImageData()
+      setData({...data, initialPosition: {x: 0, y: 0}, endPosition: {x: 0, y: 0}})
+    }
+  }, [tool])
 
   return (
     <Layout title="Manga Scanlation">
@@ -322,10 +356,36 @@ const IndexPage: NextPage = () => {
                 drawLastImageData()
               }}
               onMouseUp={(e) => {
+                let endPosition = data.endPosition
+                if(tool === 'Type' || tool === 'Select') {
+                  endPosition = getCursorPosition(e) as { x: number; y: number }
+                  if(tool === 'Type' && canvas) {
+                    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+                    const x = Math.min(data.initialPosition.x, endPosition.x)
+                    const y = Math.min(data.initialPosition.y, endPosition.y)
+                    const width = Math.abs(data.initialPosition.x - endPosition.x)
+                    const height = Math.abs(data.initialPosition.y - endPosition.y)
+                    if(width === 0 || height === 0) {
+                      saveCanvas()
+                      return
+                    }
+                    const imgData = ctx.getImageData(
+                      x,
+                      y,
+                      width,
+                      height
+                    )
+                    setWritingData({
+                      imgData,
+                      text: '',
+                      enter: 0
+                    })
+                  }
+                }
                 setData({
                   ...data,
                   onCanvas: false,
-                  endPosition: getCursorPosition(e) as { x: number; y: number },
+                  endPosition,
                 })
               }}
               onMouseDown={(e) => {
@@ -341,6 +401,8 @@ const IndexPage: NextPage = () => {
                 })
               }}
               onMouseMove={handleMoving}
+              onKeyUp={write}
+              tabIndex={1}
               ref={canvasRef}
               className={`m-auto ${cursor(tool)} origin-top-left`}
               style={{
