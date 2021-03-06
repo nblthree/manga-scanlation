@@ -1,7 +1,8 @@
 import { FunctionComponent, useState } from 'react'
-import { Home, AlignLeft, AlignCenter, AlignRight } from 'react-feather'
+import { AlignLeft, AlignCenter, AlignRight } from 'react-feather'
 import FormatSize from '@material-ui/icons/FormatSize'
 import FormatColorText from '@material-ui/icons/FormatColorText'
+import GitHub from '@material-ui/icons/GitHub'
 import { ChromePicker, RGBColor } from 'react-color'
 import { rgba2hex } from '../utils'
 
@@ -16,16 +17,19 @@ const TopBar: FunctionComponent<{
     <div className="TopBar bg-primary">
       <ul className="list-none flex flex-row h-full divide-x-2 divide-grey-800">
         <li className="h-full px-4">
-          <button
-            title="Home"
-            className="h-full border-none outline-none flex bg-transparent focus:outline-none"
+          <a
+            title="GitHub"
+            className="h-full outline-none flex bg-transparent focus:outline-none"
+            href="https://github.com/nblthree/manga-scanlation"
+            target="_blank"
+            rel="noreferrer"
           >
-            <Home
-              style={{ margin: 'auto' }}
-              size="1.1rem"
-              color="var(--icon-color)"
+            <GitHub
+              titleAccess="GitHub"
+              htmlColor="var(--icon-color)"
+              style={{ fontSize: '1.1rem', margin: 'auto' }}
             />
-          </button>
+          </a>
         </li>
         <li className="h-full px-2 flex relative">
           <span className=" text-secondary text-sm leading-8 pr-2">Fill :</span>
