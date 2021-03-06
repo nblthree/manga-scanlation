@@ -7,6 +7,7 @@ import RightBar from '../components/RightBar'
 import BottomBar from '../components/BottomBar'
 import { useEffect, useState, useRef } from 'react'
 import { rgba2hex } from '../utils'
+import { useHotkeys } from 'react-hotkeys-hook'
 
 function getMousePos(
   canvas: HTMLCanvasElement,
@@ -103,12 +104,18 @@ const IndexPage: NextPage = () => {
     endPosition: { x: 0, y: 0 },
     rubberRadius: 20,
   })
-  const [styles, setStyles] = useState({
+  const [styles, setStyles] = useState<{
+    bg: string
+    textColor: string
+    textFont: string
+    textSize: string
+    textAlign: 'left' | 'right' | 'center' | 'start' | 'end'
+  }>({
     bg: '#ffffff',
     textColor: '#000000',
     textFont: 'serif',
     textSize: '40',
-    textAlign: 'align-left',
+    textAlign: 'left',
   })
   const [history] = useState<{
     list: ImageData[]
@@ -124,8 +131,9 @@ const IndexPage: NextPage = () => {
   const canvas = canvasRef?.current
 
   const drawLastImageData = () => {
-    if (!canvas) return
-    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const c = canvas || (document.getElementById('canvas') as HTMLCanvasElement)
+    if (!c || !history.list[history.index]?.data) return
+    const ctx = c.getContext('2d') as CanvasRenderingContext2D
     ctx.putImageData(history.list[history.index], 0, 0)
   }
 
@@ -270,10 +278,11 @@ const IndexPage: NextPage = () => {
       ctx.canvas.height
     )
     const dt = Date.now() - history.time
-    if (dt < 5000) {
+    if (dt < 500) {
       history.list[history.index] = canvasData
       history.time = Date.now()
     } else {
+      history.list.splice(history.index + 1, history.list.length)
       history.list.push(canvasData)
       history.time = Date.now()
       history.index += 1
@@ -345,6 +354,7 @@ const IndexPage: NextPage = () => {
     ctx.putImageData(writingData.imgData, x, y)
 
     ctx.fillStyle = styles.textColor
+    ctx.textAlign = styles.textAlign
     ctx.font = `${styles.textSize}px ${styles.textFont}`
     wrapText(
       ctx,
@@ -399,14 +409,61 @@ const IndexPage: NextPage = () => {
     }
   }, [tool])
 
+  useEffect(() => {
+    if (writingData?.text) {
+      renderText()
+    }
+  }, [styles])
+
+  const save = (event: KeyboardEvent | void) => {
+    if (event) event.preventDefault()
+    if (!document || history.list.length === 0) return
+    const c = canvas || (document.getElementById('canvas') as HTMLCanvasElement)
+    const link = document.createElement('a')
+    link.setAttribute('download', 'scan.jpg')
+    link.setAttribute(
+      'href',
+      c.toDataURL('image/jpeg').replace('image/jpeg', 'image/octet-stream')
+    )
+    link.click()
+  }
+
+  const undo = (event: KeyboardEvent | void) => {
+    if (event) event.preventDefault()
+    if (history.index === 0) return
+    history.index -= 1
+    drawLastImageData()
+  }
+
+  const redo = (event: KeyboardEvent | void) => {
+    if (event) event.preventDefault()
+    if (history.index === history.list.length - 1) return
+    history.index += 1
+    drawLastImageData()
+  }
+
+  useHotkeys('Ctrl+z', undo)
+  useHotkeys('Ctrl+y', redo)
+  useHotkeys('Ctrl+s', save)
+
   return (
     <Layout title="Manga Scanlation">
       <div className="wrap h-full w-full">
-        <TopMenu setImageURL={setImageURL} />
+        <TopMenu
+          setImageURL={setImageURL}
+          save={save}
+          undo={undo}
+          redo={redo}
+        />
         <LeftBar setTool={setTool} tool={tool} />
         <TopBar styles={styles} setStyles={setStyles} />
         <RightBar />
-        <div className="Main flex p-4">
+        <div
+          className="Main flex p-4"
+          onClick={() => {
+            canvas?.focus()
+          }}
+        >
           <div
             className={
               imageURL ? `m-auto overflow-hidden flex w-full h-full` : ``

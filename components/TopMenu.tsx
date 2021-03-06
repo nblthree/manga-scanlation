@@ -1,8 +1,11 @@
 import { FunctionComponent } from 'react'
 
-const TopMenu: FunctionComponent<{ setImageURL: (arg: any) => void }> = ({
-  setImageURL,
-}) => {
+const TopMenu: FunctionComponent<{
+  setImageURL: (arg: any) => void
+  save: () => void
+  undo: () => void
+  redo: () => void
+}> = ({ setImageURL, save, undo, redo }) => {
   return (
     <div className="topMenu bg-primary">
       <ul className="list-none text-secondary flex flex-row">
@@ -35,10 +38,17 @@ const TopMenu: FunctionComponent<{ setImageURL: (arg: any) => void }> = ({
               </label>
             </li>
             <hr className="border-none h-px linear-gradient my-1" />
-            <li className="py-1 text-xs indent-1 relative block group">Save</li>
-            <li className="py-1 text-xs indent-1 relative block group">
-              Save As...
+            <li
+              className="py-1 text-xs indent-1 relative block group cursor-pointer"
+              onClick={() => {
+                save()
+              }}
+            >
+              Save
             </li>
+            {/*<li className="py-1 text-xs indent-1 relative block group">
+              Save As...
+                </li>*/}
           </ul>
         </li>
         <li className="h-fulltext-secondary px-2 text-sm relative block group">
@@ -46,8 +56,22 @@ const TopMenu: FunctionComponent<{ setImageURL: (arg: any) => void }> = ({
             Edit
           </button>
           <ul className="list-none text-secondary w-28 absolute z-10 left-0 p-2 bg-grey-900 hidden group-hover:block group-focus:block">
-            <li className="py-1 text-xs indent-1 relative block group">Undo</li>
-            <li className="py-1 text-xs indent-1 relative block group">Redo</li>
+            <li
+              className="py-1 text-xs indent-1 relative block group cursor-pointer"
+              onClick={() => {
+                undo()
+              }}
+            >
+              Undo
+            </li>
+            <li
+              className="py-1 text-xs indent-1 relative block group cursor-pointer"
+              onClick={() => {
+                redo()
+              }}
+            >
+              Redo
+            </li>
           </ul>
         </li>
       </ul>
