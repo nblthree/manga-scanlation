@@ -101,7 +101,6 @@ const IndexPage: NextPage = () => {
     mouseDown: { x: 0, y: 0 },
     initialPosition: { x: 0, y: 0 },
     endPosition: { x: 0, y: 0 },
-    onCanvas: false,
     rubberRadius: 20,
   })
   const [styles, setStyles] = useState({
@@ -287,7 +286,7 @@ const IndexPage: NextPage = () => {
     if (data.width === 0) return
     ev.preventDefault()
     const cursorPosition = getCursorPosition(ev)
-    const canvasPosition = data.onCanvas ? getCanvasPosition(ev) : null
+    const canvasPosition = getCanvasPosition(ev)
     setData({
       ...data,
       ...(cursorPosition ? { cursorPosition } : {}),
@@ -297,20 +296,22 @@ const IndexPage: NextPage = () => {
     if (
       canvas &&
       cursorPosition &&
-      data.onCanvas &&
-      (tool === 'Select' || tool === 'Type')
+      (tool === 'Select' || tool === 'Type') &&
+      detectLeftButton(ev)
     ) {
       const x = Math.min(data.initialPosition.x, cursorPosition.x)
       const y = Math.min(data.initialPosition.y, cursorPosition.y)
+      const width = Math.abs(data.initialPosition.x - cursorPosition.x)
+      const height = Math.abs(data.initialPosition.y - cursorPosition.y)
       drawDashedRect({
         x,
         y,
-        width: Math.abs(data.initialPosition.x - cursorPosition.x),
-        height: Math.abs(data.initialPosition.y - cursorPosition.y),
+        width,
+        height,
       })
     }
     if (tool === 'Erase' && canvas && cursorPosition) {
-      if (data.onCanvas && detectLeftButton(ev)) {
+      if (detectLeftButton(ev)) {
         erase(ev)
       }
       drawRubber(cursorPosition)
@@ -398,7 +399,6 @@ const IndexPage: NextPage = () => {
     }
   }, [tool])
 
-  let focus = false
   return (
     <Layout title="Manga Scanlation">
       <div className="wrap h-full w-full">
@@ -424,18 +424,12 @@ const IndexPage: NextPage = () => {
                 if (tool !== 'Erase') return
                 drawLastImageData()
               }}
-              onFocus={() => {
-                focus = true
-              }}
               onMouseUp={(e) => {
-                if (focus) {
-                  focus = false
-                  return
-                }
                 let endPosition = data.endPosition
                 if (tool === 'Type' || tool === 'Select') {
                   endPosition = getCursorPosition(e) as { x: number; y: number }
                   if (tool === 'Type' && canvas) {
+                    drawLastImageData()
                     const ctx = canvas.getContext(
                       '2d'
                     ) as CanvasRenderingContext2D
@@ -447,29 +441,28 @@ const IndexPage: NextPage = () => {
                     const height = Math.abs(
                       data.initialPosition.y - endPosition.y
                     )
-                    if (width === 0 || height === 0) {
-                      saveAfterText()
-                      return
-                    }
+                    if (width === 0 || height === 0) return
                     const imgData = ctx.getImageData(x, y, width, height)
                     setWritingData({
                       imgData,
                       text: '',
                     })
+                    drawDashedRect({
+                      x,
+                      y,
+                      width,
+                      height,
+                    })
                   }
                 }
                 setData({
                   ...data,
-                  onCanvas: false,
                   endPosition,
                 })
               }}
               onMouseDown={(e) => {
-                if (
-                  (e.target as HTMLElement).id !== 'canvas' ||
-                  document.activeElement?.id !== 'canvas'
-                )
-                  return
+                if ((e.target as HTMLElement).id !== 'canvas') return
+                saveAfterText()
                 setData({
                   ...data,
                   initialPosition: getCursorPosition(e) as {
@@ -477,7 +470,6 @@ const IndexPage: NextPage = () => {
                     y: number
                   },
                   mouseDown: { x: e.pageX, y: e.pageY },
-                  onCanvas: true,
                 })
               }}
               onMouseMove={handleMoving}
@@ -486,7 +478,6 @@ const IndexPage: NextPage = () => {
               ref={canvasRef}
               className={`m-auto ${cursor(tool)} origin-top-left`}
               style={{
-                //width: `${data.width * data.zoom}px`,
                 transform: `translate(${data.canvasPosition.x}px, ${data.canvasPosition.y}px) scale(${data.zoom})`,
               }}
             />
@@ -494,7 +485,10 @@ const IndexPage: NextPage = () => {
         </div>
         <BottomBar
           cursorPosition={data.cursorPosition}
-          canvasPosition={data.canvasPosition}
+          dashedRectData={{
+            width: Math.abs(data.initialPosition.x - data.endPosition.x),
+            height: Math.abs(data.initialPosition.y - data.endPosition.y),
+          }}
         />
         <style jsx>{`
           .wrap {
