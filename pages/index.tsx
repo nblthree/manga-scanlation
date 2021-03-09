@@ -181,15 +181,20 @@ const IndexPage: NextPage = () => {
       ctx.canvas.width = img.width
       ctx.canvas.height = img.height
       const { maxDisplayWidth, maxDisplayHeight } = getMaxDisplaySize(canvas)
+      const minZoom = Math.min(
+        maxDisplayWidth / img.width,
+        maxDisplayHeight / (img.width * (img.height / img.width))
+      )
       const canvasPosition = {
-        x: (maxDisplayWidth - 0.5 * img.width) / 2,
-        y: (maxDisplayHeight - 0.5 * img.height) / 2,
+        x: (maxDisplayWidth - minZoom * img.width) / 2,
+        y: (maxDisplayHeight - minZoom * img.height) / 2,
       }
       setData({
         ...data,
         width: img.width,
         height: img.height,
         canvasPosition,
+        zoom: minZoom,
       })
       ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height)
       saveCanvas()
