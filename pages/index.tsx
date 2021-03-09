@@ -65,6 +65,12 @@ function wrapText(
   maxHeight: number,
   lineHeight: number
 ) {
+  let dx = 0
+  if (['end', 'right'].includes(ctx.textAlign)) {
+    dx = maxWidth
+  } else if (ctx.textAlign === 'center') {
+    dx = maxWidth / 2
+  }
   const lines = text.split('\n')
   const startingY = y
   for (let i = 0; i < lines.length; i++) {
@@ -77,7 +83,7 @@ function wrapText(
       const testWidth = metrics.width
       if (testWidth > maxWidth && n > 0) {
         if (y + lineHeight > maxHeight + startingY) break
-        ctx.fillText(line, x, y + lineHeight)
+        ctx.fillText(line, x + dx, y + lineHeight)
         line = words[n] + ' '
         y += lineHeight
       } else {
@@ -85,7 +91,7 @@ function wrapText(
       }
     }
     if (y + lineHeight > maxHeight + startingY) break
-    ctx.fillText(line, x, y + lineHeight)
+    ctx.fillText(line, x + dx, y + lineHeight)
     y += lineHeight
   }
 }
@@ -370,16 +376,23 @@ const IndexPage: NextPage = () => {
   const write = (e: React.KeyboardEvent) => {
     if (!canvas || !writingData?.imgData) return
     const array = writingData.text.split('')
-    if (e.key === 'Backspace') {
-      if (writingData.text.endsWith('\n')) array.pop()
-      array.pop()
-    } else if (e.key === 'Enter') {
+    if (e.key === 'Enter') {
       array.push('\n')
     } else {
       array.push(e.key)
     }
     writingData.text = array.join('')
     renderText()
+  }
+  const writeKeyUp = (e: React.KeyboardEvent) => {
+    if (!canvas || !writingData?.imgData) return
+    if (e.key === 'Backspace') {
+      const array = writingData.text.split('')
+      if (writingData.text.endsWith('\n')) array.pop()
+      array.pop()
+      writingData.text = array.join('')
+      renderText()
+    }
   }
 
   const saveAfterText = () => {
@@ -531,6 +544,7 @@ const IndexPage: NextPage = () => {
               }}
               onMouseMove={handleMoving}
               onKeyPress={write}
+              onKeyUp={writeKeyUp}
               tabIndex={1}
               ref={canvasRef}
               className={`m-auto ${cursor(tool)} origin-top-left`}
