@@ -218,14 +218,28 @@ const IndexPage: NextPage = () => {
       if (z < minZoom) z = minZoom
     }
 
-    const x = maxDisplayWidth - z * data.width
-    const y = maxDisplayHeight - z * data.height
+    let y = data.canvasPosition.y - ((z - data.zoom) * data.height) / 2
+    if (y > 0) {
+      y = 0
+    } else if (y < maxDisplayHeight - data.height * z) {
+      y = maxDisplayHeight - data.height * z
+    }
+
+    let x = data.canvasPosition.x - ((z - data.zoom) * data.width) / 2
+    if (x > 0) {
+      x = 0
+    } else if (x < maxDisplayWidth - data.width * z) {
+      x = maxDisplayWidth - data.width * z
+    }
+
+    const mx = maxDisplayWidth - z * data.width
+    const my = maxDisplayHeight - z * data.height
     setData({
       ...data,
       zoom: z,
       canvasPosition: {
-        x: x / 2,
-        y: y / 2,
+        x: mx > 0 ? mx / 2 : x,
+        y: my > 0 ? my / 2 : y,
       },
     })
   }
