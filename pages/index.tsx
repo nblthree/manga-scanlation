@@ -52,7 +52,7 @@ function detectLeftButton(
   if ('buttons' in evt) {
     return evt.buttons == 1
   }
-  const button = (evt as MouseEvent).which || (evt as MouseEvent).button
+  const button = (evt as unknown as MouseEvent).which || (evt as unknown as MouseEvent).button
   return button == 1
 }
 
