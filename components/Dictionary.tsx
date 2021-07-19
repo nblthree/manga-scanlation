@@ -3,7 +3,7 @@ import SearchIcon from '@material-ui/icons/Search'
 
 const Dictionary: FunctionComponent = () => {
   const [search, setSearch] = useState('')
-  const [data, setData] = useState({
+  const [data, setData] = useState<{kanji: any, reading: any}>({
     kanji: [],
     reading: [],
   })
@@ -50,7 +50,7 @@ const Dictionary: FunctionComponent = () => {
         </button>
       </div>
       <div className="w-full p-1 text-secondary divide-y-2 divide-solid divide-secondary">
-        {data.kanji.map((entry: any, i) => (
+        {data.kanji.map((entry: any, i: number) => (
           <div key={i} className="p-2">
             <div>
               Kanji:{' '}
