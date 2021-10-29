@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react'
-import { Move, Square, Type, ZoomIn, ZoomOut } from 'react-feather'
+import { Move, Square, Type, ZoomIn, ZoomOut, Heart, Star } from 'react-feather'
 import Colorize from '@material-ui/icons/Colorize'
 import { Rubber } from '../svg'
 
@@ -14,6 +14,8 @@ const LeftBar: FunctionComponent<{
     Type,
     'Zoom In': ZoomIn,
     'Zoom Out': ZoomOut,
+    Heart,
+    Star,
   }
   return (
     <div className="LeftBar bg-primary">

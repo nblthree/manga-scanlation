@@ -3,7 +3,7 @@ import SearchIcon from '@material-ui/icons/Search'
 
 const Dictionary: FunctionComponent = () => {
   const [search, setSearch] = useState('')
-  const [data, setData] = useState<{kanji: any, reading: any}>({
+  const [data, setData] = useState<{ kanji: any; reading: any }>({
     kanji: [],
     reading: [],
   })

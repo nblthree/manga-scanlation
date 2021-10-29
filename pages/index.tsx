@@ -52,7 +52,9 @@ function detectLeftButton(
   if ('buttons' in evt) {
     return evt.buttons == 1
   }
-  const button = (evt as unknown as MouseEvent).which || (evt as unknown as MouseEvent).button
+  const button =
+    (evt as unknown as MouseEvent).which ||
+    (evt as unknown as MouseEvent).button
   return button == 1
 }
 
@@ -169,6 +171,106 @@ const IndexPage: NextPage = () => {
     ctx.lineWidth = 3
     ctx.beginPath()
     ctx.arc(x, y, data.rubberRadius, 0, 2 * Math.PI)
+    ctx.stroke()
+  }
+
+  const drawStar = ({
+    cx,
+    cy,
+    spikes,
+    outerRadius,
+    innerRadius,
+  }: {
+    cx: number
+    cy: number
+    spikes: number
+    outerRadius: number
+    innerRadius: number
+  }) => {
+    if (!canvas) return
+    drawLastImageData()
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+
+    ctx.lineWidth = 3
+    ctx.setLineDash([])
+
+    let rot = (Math.PI / 2) * 3
+    let x = cx
+    let y = cy
+    const step = Math.PI / spikes
+
+    ctx.beginPath()
+    ctx.moveTo(cx, cy - outerRadius)
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius
+      y = cy + Math.sin(rot) * outerRadius
+      ctx.lineTo(x, y)
+      rot += step
+
+      x = cx + Math.cos(rot) * innerRadius
+      y = cy + Math.sin(rot) * innerRadius
+      ctx.lineTo(x, y)
+      rot += step
+    }
+    ctx.lineTo(cx, cy - outerRadius)
+    ctx.closePath()
+    ctx.lineWidth = 5
+    ctx.strokeStyle = styles.textColor
+    ctx.stroke()
+    ctx.fillStyle = styles.bg
+    ctx.fill()
+  }
+
+  const drawHeart = ({
+    x,
+    y,
+    width,
+    height,
+  }: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }) => {
+    if (!canvas) return
+    drawLastImageData()
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+
+    ctx.lineWidth = 3
+    ctx.setLineDash([])
+    ctx.beginPath()
+    const topCurveHeight = height * 0.3
+    ctx.moveTo(x, y + topCurveHeight)
+    // top left curve
+    ctx.bezierCurveTo(x, y, x - width / 2, y, x - width / 2, y + topCurveHeight)
+
+    // bottom left curve
+    ctx.bezierCurveTo(
+      x - width / 2,
+      y + (height + topCurveHeight) / 2,
+      x,
+      y + (height + topCurveHeight) / 2,
+      x,
+      y + height
+    )
+
+    // bottom right curve
+    ctx.bezierCurveTo(
+      x,
+      y + (height + topCurveHeight) / 2,
+      x + width / 2,
+      y + (height + topCurveHeight) / 2,
+      x + width / 2,
+      y + topCurveHeight
+    )
+
+    // top right curve
+    ctx.bezierCurveTo(x + width / 2, y, x, y, x, y + topCurveHeight)
+
+    ctx.closePath()
+    ctx.fillStyle = styles.bg
+    ctx.strokeStyle = styles.textColor
+    ctx.fill()
     ctx.stroke()
   }
 
@@ -314,6 +416,28 @@ const IndexPage: NextPage = () => {
     }
   }
 
+  const drawShape = (
+    tool: string,
+    para: {
+      x: number
+      y: number
+      width: number
+      height: number
+    }
+  ) => {
+    if (tool === 'Heart') {
+      drawHeart(para)
+    } else if (tool === 'Star') {
+      drawStar({
+        cx: para.x + para.width / 2,
+        cy: para.y + para.height / 2,
+        spikes: 5,
+        outerRadius: 1 * para.width,
+        innerRadius: 0.5 * para.width,
+      })
+    }
+  }
+
   const handleMoving = (
     ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>
   ) => {
@@ -330,19 +454,30 @@ const IndexPage: NextPage = () => {
     if (
       canvas &&
       cursorPosition &&
-      (tool === 'Select' || tool === 'Type') &&
+      (tool === 'Select' ||
+        tool === 'Type' ||
+        tool === 'Heart' ||
+        tool === 'Star') &&
       detectLeftButton(ev)
     ) {
       const x = Math.min(data.initialPosition.x, cursorPosition.x)
       const y = Math.min(data.initialPosition.y, cursorPosition.y)
       const width = Math.abs(data.initialPosition.x - cursorPosition.x)
       const height = Math.abs(data.initialPosition.y - cursorPosition.y)
-      drawDashedRect({
+      const para = {
         x,
         y,
         width,
         height,
-      })
+      }
+      drawDashedRect(para)
+      if (tool === 'Heart' || tool === 'Star')
+        drawShape(tool, {
+          x: para.x,
+          y: para.y,
+          width: Math.max(para.width, para.height),
+          height: Math.max(para.width, para.height),
+        })
     }
     if (tool === 'Erase' && canvas && cursorPosition) {
       if (detectLeftButton(ev)) {
@@ -431,7 +566,7 @@ const IndexPage: NextPage = () => {
   })
 
   useEffect(() => {
-    if (['Erase', 'Type', 'Select', 'none'].includes(tool)) {
+    if (['Erase', 'Type', 'Select', 'none', 'Heart', 'Star'].includes(tool)) {
       drawLastImageData()
       setData({
         ...data,
@@ -515,9 +650,17 @@ const IndexPage: NextPage = () => {
               }}
               onMouseUp={(e) => {
                 let endPosition = data.endPosition
-                if (tool === 'Type' || tool === 'Select') {
+                if (
+                  tool === 'Type' ||
+                  tool === 'Select' ||
+                  tool === 'Heart' ||
+                  tool === 'Star'
+                ) {
                   endPosition = getCursorPosition(e) as { x: number; y: number }
-                  if (tool === 'Type' && canvas) {
+                  if (
+                    (tool === 'Type' || tool === 'Heart' || tool === 'Star') &&
+                    canvas
+                  ) {
                     drawLastImageData()
                     const ctx = canvas.getContext(
                       '2d'
@@ -531,17 +674,27 @@ const IndexPage: NextPage = () => {
                       data.initialPosition.y - endPosition.y
                     )
                     if (width === 0 || height === 0) return
-                    const imgData = ctx.getImageData(x, y, width, height)
-                    setWritingData({
-                      imgData,
-                      text: '',
-                    })
-                    drawDashedRect({
-                      x,
-                      y,
-                      width,
-                      height,
-                    })
+                    if (tool === 'Type') {
+                      const imgData = ctx.getImageData(x, y, width, height)
+                      setWritingData({
+                        imgData,
+                        text: '',
+                      })
+                      drawDashedRect({
+                        x,
+                        y,
+                        width,
+                        height,
+                      })
+                    } else {
+                      drawShape(tool, {
+                        x: x,
+                        y: y,
+                        width: Math.max(width, height),
+                        height: Math.max(width, height),
+                      })
+                      saveCanvas()
+                    }
                   }
                 }
                 setData({
