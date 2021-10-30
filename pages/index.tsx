@@ -528,7 +528,7 @@ const IndexPage: NextPage = () => {
   }
 
   const write = (e: React.KeyboardEvent) => {
-    if (!canvas || !writingData?.imgData) return
+    if (!canvas || !writingData?.imgData || e.ctrlKey) return
     const array = writingData.text.split('')
     if (e.key === 'Enter') {
       array.push('\n')
@@ -538,8 +538,20 @@ const IndexPage: NextPage = () => {
     writingData.text = array.join('')
     renderText()
   }
+  const past = async (e: any) => {
+    if(e.ctrlKey && e.key === 'v') {
+      if (!canvas || !writingData?.imgData) return
+      const text = await navigator.clipboard.readText()
+      const array = writingData.text.split('')
+      if(!text) return
+      array.push(...text.split(''))
+      writingData.text = array.join('')
+      renderText()
+    }
+  }
   const writeKeyUp = (e: React.KeyboardEvent) => {
-    if (!canvas || !writingData?.imgData) return
+    past(e)
+    if (!canvas || !writingData?.imgData || e.ctrlKey) return
     if (e.key === 'Backspace') {
       const array = writingData.text.split('')
       if (writingData.text.endsWith('\n')) array.pop()
